@@ -1,0 +1,1 @@
+python script that fetches today's currency exchange for the Algerian Dinar.
