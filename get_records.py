@@ -12,7 +12,7 @@ alger_timezone = pytz.timezone('Africa/Algiers')
 
 
 
-class GetCurrencies():
+class Currencies():
 
   def __init__(self):
       self.password = {'afous': 'moh!12!'}
@@ -39,7 +39,7 @@ class GetCurrencies():
 
 if __name__ == "__main__":
   #get the data from the website.
-  todays_records = GetCurrencies()
+  todays_records = Currencies()
   record_data=todays_records.getdata()
 
   #upload the data to firebase
