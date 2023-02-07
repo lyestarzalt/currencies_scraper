@@ -4,9 +4,7 @@ import datetime
 import requests
 import pandas as pd
 import re
-import firebase_admin
-from firebase_admin import credentials
-from firebase_admin import firestore
+
 
 @dataclass
 class Currency:
@@ -29,7 +27,7 @@ class DinarScraper:
         try:
             latest_data = raw_data[0]
         except IndexError:
-            return datetime.date(1970,1,1), Currency()
+            return datetime.date(1970, 1, 1), Currency()
         # map the data to a list of Currency objects
         currencies = []
         create_date_time = datetime.datetime.strptime(
@@ -117,13 +115,4 @@ class DinarScraper:
 
 
 if __name__ == "__main__":
-    dinar_scraper = DinarScraper()
-
-    todays_records = Currencies()
-    record_data=todays_records.getdata()
-
-    #upload the data to firebase
-    cred = credentials.Certificate("exchange-dinar-key.json")
-    firebase_admin.initialize_app(cred)
-    db = firestore.client()
-    db.collection(u'exchange-daily').document(str(todays_records.todayDate)).set({"anis":todays_records.seperateValues()})
+    pass
