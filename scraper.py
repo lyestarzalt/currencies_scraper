@@ -31,7 +31,7 @@ class DinarScraper:
         # map the data to a list of Currency objects
         currencies = []
         create_date_time = datetime.datetime.strptime(
-            latest_data["create_date_time"], "%d-%m-%Y %H:%M:%S")
+            latest_data["create_date_time"], "%d-%m-%Y %H:%M:%S").date()
         for key, value in latest_data.items():
             if key.endswith("_sell"):
                 name = key[:-5]
@@ -40,7 +40,7 @@ class DinarScraper:
                 currencies.append(Currency(name=name, buy=buy, sell=sell))
         return create_date_time, currencies
 
-    def replace_symbol(self, symbol: str):
+    def replace_symbol(self, symbol: str) -> str:
         symbol_map = {'€': 'eur', '$': 'usd', '£': 'gbp', 'EAD': 'aed'}
         return symbol_map.get(symbol, symbol)
 
@@ -64,7 +64,7 @@ class DinarScraper:
             html_content = response.text
             update_date = re.search(
                 'Mise à jour : (.*?)<', html_content).group(1)
-            update_date = datetime.strptime(update_date, '%d %B %Y')
+            update_date = datetime.date.strptime(update_date, '%d %B %Y')
         except (AttributeError, ValueError) as err:
             return datetime.date(1970, 1, 1), Currency()
         euro_usd = df_list[0]
