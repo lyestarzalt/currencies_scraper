@@ -1,29 +1,74 @@
 # Author: Lyes Tarzalt
 from dataclasses import dataclass
-import datetime
-import requests
-import pandas as pd
 import re
+import datetime
+from typing import List, Tuple
+import requests
 
 
 @dataclass
 class Currency:
+    """
+
+    """
     name: str = None
     buy: float = None
     sell: float = None
 
 
+def translate_month_to_english(date_str: str) -> str:
+    """
+    Args:
+        date_str (str): Month  in french
+
+    Returns:
+        str: Month in English
+    """
+    french_to_english_months = {
+        'Janvier': 'January',
+        'Février': 'February',
+        'Mars': 'March',
+        'Avril': 'April',
+        'Mai': 'May',
+        'Juin': 'June',
+        'Juillet': 'July',
+        'Août': 'August',
+        'Septembre': 'September',
+        'Octobre': 'October',
+        'Novembre': 'November',
+        'Décembre': 'December'
+    }
+
+    for french, english in french_to_english_months.items():
+        if french in date_str:
+            return date_str.replace(french, english)
+    return date_str
+
+
 class DinarScraper:
+    """_summary_
+
+    Raises:
+        ValueError: _description_
+        ValueError: _description_
+
+    Returns:
+        _type_: _description_
+    """
     forex_url = "http://www.forexalgerie.com/connect/updateExchange.php"
     devise_dz_url = "https://www.devise-dz.com/square-port-said-alger/"
 
     def __init__(self) -> None:
-        now_date = datetime.date.today()
+        pass
 
-    def get_forex_data(self) -> tuple[datetime.date, list[Currency]]:
-        """Get the latest forex data from the website."""
+    def get_forex_data(self) -> Tuple[datetime.date, List[Currency]]:
+        """_summary_
+
+        Returns:
+            Tuple[datetime.date, List[Currency]]: _description_
+        """        """Get the latest forex data from the website."""
         raw_data = requests.post(DinarScraper.forex_url,
-                                 {'afous': 'moh!12!'}, verify=False).json()
+                                 {'afous': 'moh!12!'}, verify=False, timeout=10).json()
         try:
             latest_data = raw_data[0]
         except IndexError:
@@ -41,77 +86,84 @@ class DinarScraper:
         return create_date_time, currencies
 
     def replace_symbol(self, symbol: str) -> str:
+        """_summary_
+
+        Args:
+            symbol (str): _description_
+
+        Returns:
+            str: _description_
+        """
         symbol_map = {'€': 'eur', '$': 'usd', '£': 'gbp', 'EAD': 'aed'}
         return symbol_map.get(symbol, symbol)
 
-    def get_devise_dz_data(self) -> list[Currency]:
+    def extract_currency_data(self, html_content):
+        """_summary_
+
+        Args:
+            html_content (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        currencies = []
+        table_matches = re.findall(
+            r'<table.*?>(.*?)</table>', html_content, re.DOTALL)
+
+        for table in table_matches:
+            row_matches = re.findall(r'<tr.*?>(.*?)</tr>', table, re.DOTALL)
+            for row in row_matches:
+                cell_matches = re.findall(
+                    r'<td.*?>(?:<a.*?>)?(.*?)(?:</a>)?</td>', row, re.DOTALL)
+                if len(cell_matches) >= 3:
+                    currency_name_match = re.search(
+                        r'\((.*?)\)', cell_matches[0])
+                    if currency_name_match:
+                        currency_name = self.replace_symbol(
+                            currency_name_match.group(1).lower())
+                        buy_value = float(cell_matches[1].strip(
+                            ' DA').replace(',', '.'))
+                        sell_value = float(
+                            cell_matches[2].strip(' DA').replace(',', '.'))
+                        currencies.append(
+                            Currency(name=currency_name, buy=buy_value, sell=sell_value))
+
+        return currencies
+
+    def get_devise_dz_data(self) -> Tuple[datetime.date, List[Currency]]:
+        """Scrape devise website
+
+        Raises:
+            ValueError: No currencies shown
+
+        Returns:
+            Tuple[datetime.date, List[Currency]]: _description_
+        """
         try:
-            response = requests.get(
-                'https://www.devise-dz.com/square-port-said-alger/')
+            response = requests.get(self.devise_dz_url, timeout=10)
             response.raise_for_status()
         except requests.exceptions.HTTPError as error:
-            print(f"An error occured while making the request: {error}")
-            return datetime.date(1970, 1, 1), Currency()
+            print(f"HTTP error occurred: {error}")
+            return datetime.date(1970, 1, 1), []
 
-        try:
-            df_list = pd.read_html(response.content)
-
-        except ValueError as error:
-            print(
-                f"An error occured while parsing the response content: {error}")
-            return datetime.date(1970, 1, 1), Currency()
         try:
             html_content = response.text
-            update_date = re.search(
-                'Mise à jour : (.*?)<', html_content).group(1)
-            update_date = datetime.date.strptime(update_date, '%d %B %Y')
-        except (AttributeError, ValueError) as err:
-            return datetime.date(1970, 1, 1), Currency()
-        euro_usd = df_list[0]
-        rest_currencies = df_list[1]
-        rest_currencies.rename(
-            columns={0: 'Devises', 1: 'Achat', 2: 'Vente'}, inplace=True)
-        euro_usd.set_index('Devises')
-        rest_currencies.set_index('Devises')
-        merged_currencies = pd.concat([rest_currencies, euro_usd])
+            update_date_match = re.search('Mise à jour : (.*?)<', html_content)
+            if update_date_match:
+                update_date_str = translate_month_to_english(
+                    update_date_match.group(1))
+                update_date = datetime.datetime.strptime(
+                    update_date_str, '%d %B %Y').date()
 
-        merged_currencies['Achat'] = merged_currencies['Achat'].str.replace(
-            ',', '.')
-        merged_currencies['Achat'] = merged_currencies['Achat'].str.strip(
-            ' DA')
-        merged_currencies['Vente'] = merged_currencies['Vente'].str.replace(
-            ',', '.')
-        merged_currencies['Vente'] = merged_currencies['Vente'].str.strip(
-            ' DA')
+            else:
+                raise ValueError('Update date not found')
 
-        currencies_names = merged_currencies['Devises'].to_list()
+            currencies = self.extract_currency_data(html_content)
+            return update_date, currencies
 
-        currencies = []
-        for name in currencies_names:
-            symbol = name[name.find('(')+1:name.find(')')]
-            symbol = symbol.lower()
-            symbol = symbol.replace('€', 'eur')
-            symbol = symbol.replace('$', 'usd')
-            symbol = symbol.replace('£', 'gbp')
-            symbol = symbol.replace('ead', 'aed')
-            currencies.append(symbol)
-
-        merged_currencies['Vente'] = pd.to_numeric(
-            merged_currencies['Vente'])
-        merged_currencies['Achat'] = pd.to_numeric(
-            merged_currencies['Achat'])
-
-        merged_currencies['Devises'] = currencies
-        merged_currencies.set_index('Devises', inplace=True)
-        merged_currencies.rename(
-            columns={'Achat': 'buy', 'Vente': 'sell'}, inplace=True)
-
-        currencies = []
-        for name, values in merged_currencies.iterrows():
-            currencies.append(
-                Currency(name=name, buy=values['buy'], sell=values['sell']))
-
-        return update_date, currencies
+        except Exception as e:
+            print(f"Error parsing the webpage: {e}")
+            return datetime.date(1970, 1, 1), []
 
 
 if __name__ == "__main__":
