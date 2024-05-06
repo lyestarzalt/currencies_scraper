@@ -1,19 +1,10 @@
 # Author: Lyes Tarzalt
-from dataclasses import dataclass
 import re
 import datetime
 from typing import List, Tuple
 import requests
-
-
-@dataclass
-class Currency:
-    """
-
-    """
-    name: str = None
-    buy: float = None
-    sell: float = None
+from model import Currency
+from currency_data_provider import CurrencyDataProvider
 
 
 def translate_month_to_english(date_str: str) -> str:
@@ -59,7 +50,7 @@ class DinarScraper:
     devise_dz_url = "https://www.devise-dz.com/square-port-said-alger/"
 
     def __init__(self) -> None:
-        pass
+        self.currency_provider = CurrencyDataProvider('countries.json')
 
     def get_forex_data(self) -> Tuple[datetime.date, List[Currency]]:
         """_summary_
@@ -79,10 +70,23 @@ class DinarScraper:
             latest_data["create_date_time"], "%d-%m-%Y %H:%M:%S").date()
         for key, value in latest_data.items():
             if key.endswith("_sell"):
-                name = key[:-5]
+                currency_code = key[:-5].upper()
                 sell = float(value)
-                buy = float(latest_data[name + "_buy"])
-                currencies.append(Currency(name=name, buy=buy, sell=sell))
+                buy = float(latest_data[currency_code.lower() + "_buy"])
+                # Get additional details from CurrencyDataProvider
+                additional_details = self.currency_provider.get_currency_details(
+                    currency_code)
+                currency = Currency(
+                    currencyCode=currency_code,
+                    name=additional_details.get('name', ''),
+                    symbol=additional_details.get('symbol', ''),
+                    flag=additional_details.get('flag', ''),
+                    buy=buy,
+                    sell=sell,
+                    date=create_date_time.strftime("%Y-%m-%d"),
+                    is_core=True  # Mark as core currency
+                )
+                currencies.append(currency)
         return create_date_time, currencies
 
     def replace_symbol(self, symbol: str) -> str:
@@ -98,13 +102,11 @@ class DinarScraper:
         return symbol_map.get(symbol, symbol)
 
     def extract_currency_data(self, html_content):
-        """_summary_
-
+        """Extract currency data from HTML content.
         Args:
-            html_content (_type_): _description_
-
+            html_content (str): HTML content from the webpage.
         Returns:
-            _type_: _description_
+            List[Currency]: List of extracted currency data.
         """
         currencies = []
         table_matches = re.findall(
@@ -119,14 +121,29 @@ class DinarScraper:
                     currency_name_match = re.search(
                         r'\((.*?)\)', cell_matches[0])
                     if currency_name_match:
-                        currency_name = self.replace_symbol(
-                            currency_name_match.group(1).lower())
+                        #
+                        currency_code = self.replace_symbol(
+                            currency_name_match.group(1).upper())
                         buy_value = float(cell_matches[1].strip(
                             ' DA').replace(',', '.'))
                         sell_value = float(
                             cell_matches[2].strip(' DA').replace(',', '.'))
-                        currencies.append(
-                            Currency(name=currency_name, buy=buy_value, sell=sell_value))
+
+                        # Get additional details from CurrencyDataProvider
+                        additional_details = self.currency_provider.get_currency_details(
+                            currency_code.upper())
+
+                        currency = Currency(
+                            currencyCode=currency_code.upper(),
+                            name=additional_details.get('name', ''),
+                            symbol=additional_details.get('symbol', ''),
+                            flag=additional_details.get('flag', ''),
+                            buy=buy_value,
+                            sell=sell_value,
+                            date=datetime.datetime.now().strftime("%Y-%m-%d"),
+                            is_core=True  # Mark as core currency
+                        )
+                        currencies.append(currency)
 
         return currencies
 
@@ -167,4 +184,8 @@ class DinarScraper:
 
 
 if __name__ == "__main__":
-    pass
+    sr = DinarScraper()
+
+#    first_source = sr.get_forex_data()
+    second_source = sr.get_devise_dz_data()
+    print(second_source)

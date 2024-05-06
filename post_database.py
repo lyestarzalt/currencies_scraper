@@ -6,8 +6,6 @@ from firebase_admin import credentials, firestore
 from scraper import DinarScraper
 
 
-
-
 keys = {
     "type": "service_account",
     "project_id": os.getenv("PROJECT_ID"),
