@@ -59,9 +59,12 @@ class ExtraCurrencyManager:
         # TODO Margins: Adjust these values
         buy_margin = 1.02  # 2% higher for buying rates
         sell_margin = 0.98  # 2% lower for selling rates
+        _core_currencies = {'CNY', 'USD', 'CHF', 'TRY', 'AED',
+                            'EUR', 'CAD', 'SAR', 'GBP'}  # Define core currencies
 
         for currency_code, rate in rates.items():
             if currency_code != self.base_currency.currencyCode:
+                is_core = currency_code in _core_currencies
                 buy_rate = (1 / rate) * buy_margin
                 sell_rate = (1 / rate) * sell_margin
                 additional_details = self.currency_provider.get_currency_details(
@@ -74,7 +77,7 @@ class ExtraCurrencyManager:
                     buy=buy_rate,
                     sell=sell_rate,
                     date=datetime.now().strftime("%Y-%m-%d"),
-                    is_core=False
+                    is_core=is_core
                 )
                 official_currencies.append(currency)
 
