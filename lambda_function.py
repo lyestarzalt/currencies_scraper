@@ -50,7 +50,6 @@ def update_trend_data(currency, new_data_date, new_data_buy):
 
 def lambda_handler(event, context) -> dict:
     try:
-
         # Initialize Scraper and Data Provider
         scraper = DinarScraper()
         data_provider = CurrencyDataProvider('countries.json')
@@ -59,42 +58,59 @@ def lambda_handler(event, context) -> dict:
         _, core_currencies_list = scraper.get_forex_data()
         core_currencies = {
             currency.currencyCode: currency for currency in core_currencies_list}
+
         # Choose a base currency and create ExtraCurrencyManager
         base_currency = core_currencies.get('EUR', None)
         if not base_currency:
             raise ValueError("Base currency not found in core currencies")
+
         manager = ExtraCurrencyManager(
             base_currency, core_currencies, data_provider)
-        non_core_currencies = manager.calculate_converted_currencies()
 
-        # Merge core and non-core currencies
+        # Calculate unofficial exchange rates
+        non_core_currencies = manager.calculate_converted_currencies()
         all_currencies = {
             **{currency.currencyCode: currency for currency in non_core_currencies}, **core_currencies}
 
-        # Construct the exchange data for Firestore
-        exchange_data = {currency_code: {"currencyCode": currency.currencyCode, "name": currency.name,
-                                         "symbol": currency.symbol, "flag": currency.flag, "buy": currency.buy,
-                                         "sell": currency.sell, "date": currency.date, "is_core": currency.is_core}
-                         for currency_code, currency in all_currencies.items()}
+        # Calculate official exchange rates
+        official_currencies = manager.get_official_exchange_rates()
 
-        # Upload the data to Firebase and update trends
+        # Construct the exchange data for Firestore for unofficial rates
+        unofficial_exchange_data = {currency_code: {"currencyCode": currency.currencyCode, "name": currency.name,
+                                                    "symbol": currency.symbol, "flag": currency.flag, "buy": currency.buy,
+                                                    "sell": currency.sell, "date": currency.date, "is_core": currency.is_core}
+                                    for currency_code, currency in all_currencies.items()}
+
+        # Construct the exchange data for Firestore for official rates
+        official_exchange_data = {currency.currencyCode: {"currencyCode": currency.currencyCode, "name": currency.name,
+                                                          "symbol": currency.symbol, "flag": currency.flag, "buy": currency.buy,
+                                                          "sell": currency.sell, "date": currency.date, "is_core": currency.is_core}
+                                  for currency in official_currencies}
+
+        # Upload the data to Firebase for unofficial rates
         current_date = datetime.now().date()
-        db.collection(u'exchange-daily').document(str(current_date)).set(exchange_data)
-        core_currencies = {currency.currencyCode: currency for currency in core_currencies_list}
+        db.collection(u'exchange-daily').document(str(current_date)
+                                                  ).set(unofficial_exchange_data)
 
+        # Upload the data to Firebase for official rates
+        db.collection(
+            u'exchange-daily-official').document(str(current_date)).set(official_exchange_data)
+
+        # Update trend data for unofficial rates
         for currency_code in core_currencies.keys():
-            if currency_code in exchange_data:
+            if currency_code in unofficial_exchange_data:
                 update_trend_data(currency_code, current_date,
-                                  exchange_data[currency_code]['buy'])
+                                  unofficial_exchange_data[currency_code]['buy'])
 
+        # Send notifications
         languages = ['en', 'de', 'fr', 'ar', 'es', 'zh']
         for lang in languages:
             send_localized_notification(lang, current_date)
 
         return {'statusCode': 200, 'body': 'Data updated successfully'}
-    except firebase_admin.exceptions.FirebaseError as fe:
-        print(f"Firebase error: {fe}")
-        return {'statusCode': 500, 'body': 'Firebase operation failed'}
+    except Exception as e:  # Catch all exceptions, not just Firebase errors
+        print(f"Error: {e}")
+        return {'statusCode': 500, 'body': 'Operation failed'}
 
 
 if __name__ == "__main__":
