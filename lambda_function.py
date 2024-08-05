@@ -56,8 +56,7 @@ def lambda_handler(event, context) -> dict:
 
         # Fetch core currencies data
         _, core_currencies_list = scraper.get_forex_data()
-        core_currencies = {
-            currency.currencyCode: currency for currency in core_currencies_list}
+        core_currencies = {currency.currencyCode: currency for currency in core_currencies_list}
 
         # Choose a base currency and create ExtraCurrencyManager
         base_currency = core_currencies.get('EUR', None)
