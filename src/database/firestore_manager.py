@@ -3,6 +3,7 @@ from typing import Dict, List
 from models.currency import Currency  
 from database.firebase_setup import get_firestore_client 
 from utils.logger import get_logger
+import sys
 
 logger = get_logger('FirestoreManager')
 
@@ -21,6 +22,7 @@ class FirestoreManager:
                 trend_data[current_date] = currency.buy
                 filtered_trend_data = {date: rate for date, rate in trend_data.items() if date >= cutoff_date}
                 trend_document.set(filtered_trend_data)
+                logger.info(f"Updated trend data for {currency.currencyCode}: {len(trend_data)} entries.")
             logger.info("Currency trends updated successfully.")
         except Exception as e:
             logger.error(f"Failed to update currency trends: {e}", exc_info=True)
@@ -42,10 +44,9 @@ class FirestoreManager:
                 } for currency in currencies
             }
             current_date = datetime.now().strftime('%Y-%m-%d')
-            logger.info(f"Attempting to write data to Firestore. {collection_name}")
+            logger.info(f"Attempting to write data to Firestore. {collection_name}, {len(currencies)} entries. data size: {sys.getsizeof(exchange_data)} bytes.")
             self.db.collection(collection_name).document(current_date).set(exchange_data)
             logger.info(f"Exchange rates uploaded successfully. {collection_name}")
         except Exception as e:
             logger.error(f"Failed to upload exchange rates: {e}", exc_info=True)
             raise
-

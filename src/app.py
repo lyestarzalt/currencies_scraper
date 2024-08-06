@@ -23,6 +23,7 @@ def main():
         currency_manager = CurrencyManager(base_currency='usd', core_currencies=currencies)
         unofficial_rates = currency_manager.generate_unofficial_rates()
         official_rates = currency_manager.generate_official_rates()
+        
         firestore_manager.update_currency_trends(currencies, collection_name='currency-trends_test')
         firestore_manager.upload_exchange_rates(currencies=unofficial_rates, collection_name='exchange-daily_test') 
         firestore_manager.upload_exchange_rates(currencies=official_rates, collection_name='exchange-daily-official_test')  
