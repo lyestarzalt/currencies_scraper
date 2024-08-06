@@ -1,17 +1,22 @@
-from datetime import datetime
+import os
 import re
+from datetime import datetime
+from typing import List
 import requests
-from typing import List, Tuple
+from dotenv import load_dotenv
+from bs4 import BeautifulSoup
 from scrapers.base import CurrencyScraperBase
 from models.currency import Currency
 from utils.logger import get_logger
-from bs4 import BeautifulSoup
+from exceptions.data_exceptions import DataFetchError, DataParseError
 
+# Load environment variables from .env file
+load_dotenv()
 logger = get_logger('SourceTwoScraper')
+DEVISE_DZ_URL = os.getenv('SOURCE_TWO_URL', 'default_devise_dz_url')
 
 class SourceTwoScraper(CurrencyScraperBase):
-    devise_dz_url = "https://www.devise-dz.com/square-port-said-alger/"
-
+    devise_dz_url = DEVISE_DZ_URL
     def fetch_data(self) -> str:
         try:
             response = requests.get(self.devise_dz_url, timeout=10)
@@ -19,10 +24,11 @@ class SourceTwoScraper(CurrencyScraperBase):
             logger.info(f"Successfully fetched data from {self.devise_dz_url}.")
             return response.text
         except requests.RequestException as e:
-            logger.error(f"Error fetching data from {self.devise_dz_url}: {str(e)}")
-            return ""
+            error_msg = f"Error fetching data: {str(e)}"
+            logger.error(error_msg)
+            raise DataFetchError(error_msg) from e
 
-    def parse_data(self, html_content: str) -> Tuple[datetime, List[Currency]]:
+    def parse_data(self, html_content: str) ->  List[Currency]:
         try:
             update_date_match = re.search('Mise à jour : (.*?)<', html_content)
             if update_date_match:
@@ -31,11 +37,13 @@ class SourceTwoScraper(CurrencyScraperBase):
             else:
                 raise ValueError('Update date not found')
 
-            currencies = self.extract_currency_data(html_content)
-            return update_date, currencies
+            currencies = self.extract_currency_data(html_content, update_date)
+            return currencies
         except Exception as e:
-            logger.error(f"Error parsing the webpage: {e}")
-            return datetime.now().date(), []
+            error_msg = f"Error parsing JSON data: {e}"
+            logger.error(error_msg)
+            raise DataParseError(error_msg)
+
     def replace_symbol(self, symbol: str) -> str:
         """_summary_
 
@@ -58,7 +66,7 @@ class SourceTwoScraper(CurrencyScraperBase):
             date_str = date_str.replace(french, english)
         return date_str
 
-    def extract_currency_data(self, html_content: str) -> List[Currency]:
+    def extract_currency_data(self, html_content: str, update_date) -> List[Currency]:
         currencies = []
         soup = BeautifulSoup(html_content, 'html.parser')
 
@@ -82,7 +90,7 @@ class SourceTwoScraper(CurrencyScraperBase):
                             currencyCode=currency_code.upper(),
                             buy=buy_value,
                             sell=sell_value,
-                            date=datetime.now().strftime("%Y-%m-%d"),
+                            update_date=update_date,
                             is_core=True
                         )
                         currencies.append(currency)
@@ -90,10 +98,4 @@ class SourceTwoScraper(CurrencyScraperBase):
         return currencies
 
 
-    def get_data(self) -> Tuple[datetime, List[Currency]]:
-        html_content = self.fetch_data()
-        if html_content:
-            return self.parse_data(html_content)
-        else:
-            logger.warning("Failed to fetch or empty content.")
-            return datetime.now().date(), []
+

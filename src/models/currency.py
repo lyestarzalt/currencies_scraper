@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional
 import json
-from datetime import datetime
+from datetime import datetime, date
 from utils.logger import get_logger
 
 logger = get_logger('CurrencyModel')
@@ -23,24 +23,24 @@ try:
 except Exception as e:
     logger.error(f"Failed to load currency data: {e}")
 
-@dataclass() 
+@dataclass
 class Currency:
     currencyCode: str
     buy: float
     sell: float
-    name: Optional[str] = None
-    symbol: Optional[str] = None
-    flag: Optional[str] = None
-    date: Optional[str] = None
-    is_core: bool = False
+    is_core: bool 
+    update_date: date
+    name: str = ""
+    symbol: str = ""
+    flag: str = ""
 
     def __post_init__(self):
         currency_info = currency_map.get(self.currencyCode, {})
         self.name = currency_info.get("name", self.name)
         self.symbol = currency_info.get("symbol", self.symbol)
         self.flag = currency_info.get("flag", self.flag)
-        if not self.date:
-            self.date = datetime.now().strftime("%Y-%m-%d")
+        if not self.update_date:
+            self.update_date = datetime.now().strftime("%Y-%m-%d")
     def __eq__(self, other):
         if not isinstance(other, Currency):
             return NotImplemented

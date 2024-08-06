@@ -163,3 +163,4 @@ cython_debug/
 # html for testing
 
 tests/devise_dz_response.html
+exchange-dinar-staging-firebase-adminsdk.json
