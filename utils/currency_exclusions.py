@@ -1,11 +1,7 @@
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
+from utils.config import EXCLUDED_CURRENCIES
 
 def get_excluded_currencies():
-    excluded = os.getenv("EXCLUDED_CURRENCIES", "DZD")
-    return set(excluded.split(","))
+    return set(EXCLUDED_CURRENCIES)
 
 def is_currency_excluded(currency_code: str) -> bool:
     """
@@ -13,4 +9,3 @@ def is_currency_excluded(currency_code: str) -> bool:
     """
     excluded_currencies = get_excluded_currencies()
     return currency_code in excluded_currencies
-

@@ -1,17 +1,14 @@
 from datetime import datetime
 from typing import List
-import os
 import requests
 from scrapers.base import CurrencyScraperBase
 from models.currency import Currency
+from utils.config import SOURCE_ONE_URL
 from utils.logger import get_logger 
 from exceptions.data_exceptions import DataFetchError, DataParseError\
 
-from dotenv import load_dotenv
-
-load_dotenv()
 logger = get_logger('SourceOneScraper')
-SOURCE_ONE_URL = os.getenv('SOURCE_ONE_URL', 'default_url')
+
 
 class SourceOneScraper(CurrencyScraperBase):
 

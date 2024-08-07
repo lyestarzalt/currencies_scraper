@@ -4,13 +4,10 @@ from typing import Dict, List
 from models.currency import Currency
 from utils.logger import get_logger
 from utils.currency_exclusions import is_currency_excluded
-import os
-from dotenv import load_dotenv
+from utils.config import API_BASE_URL
 
-load_dotenv()
 logger = get_logger('CurrencyManager')
 
-API_BASE_URL = os.getenv('API_BASE_URL')
 class CurrencyManager:
     def __init__(self, base_currency: str, core_currencies: List[Currency]):
         self.base_currency: str = 'usd'
@@ -18,7 +15,7 @@ class CurrencyManager:
 
     def fetch_exchange_rates(self) -> Dict[str, float]:
         """Fetch exchange rates for the base currency from an external API."""
-        url = f"https://open.er-api.com/v6/latest/{self.base_currency}"
+        url = f"{API_BASE_URL}{self.base_currency}"
         try:
             response = requests.get(url)
             response.raise_for_status()

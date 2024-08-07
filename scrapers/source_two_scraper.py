@@ -1,27 +1,22 @@
-import os
 import re
 from datetime import datetime
 from typing import List
 import requests
-from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from scrapers.base import CurrencyScraperBase
 from models.currency import Currency
 from utils.logger import get_logger
 from exceptions.data_exceptions import DataFetchError, DataParseError
+from utils.config import SOURCE_TWO_URL
 
-# Load environment variables from .env file
-load_dotenv()
 logger = get_logger('SourceTwoScraper')
-DEVISE_DZ_URL = os.getenv('SOURCE_TWO_URL', 'default_devise_dz_url')
 
 class SourceTwoScraper(CurrencyScraperBase):
-    devise_dz_url = DEVISE_DZ_URL
     def fetch_data(self) -> str:
         try:
-            response = requests.get(self.devise_dz_url, timeout=10)
+            response = requests.get(SOURCE_TWO_URL, timeout=10)
             response.raise_for_status()
-            logger.info(f"Successfully fetched data from {self.devise_dz_url}.")
+            logger.info(f"Successfully fetched data from {SOURCE_TWO_URL}.")
             return response.text
         except requests.RequestException as e:
             error_msg = f"Error fetching data: {str(e)}"
