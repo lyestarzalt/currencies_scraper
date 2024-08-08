@@ -3,7 +3,6 @@ from currency_management.currency_manager import CurrencyManager
 from database.firestore_manager import FirestoreManager
 from utils.logger import get_logger
 from typing import Any, Dict
-from datetime import date
 
 logger = get_logger('App')
 
