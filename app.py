@@ -7,7 +7,7 @@ from datetime import date
 
 logger = get_logger('App')
 
-def main():
+def main() -> None:
 
     logger.info("Starting the application.")
     firestore_manager = FirestoreManager()

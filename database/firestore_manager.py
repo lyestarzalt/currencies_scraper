@@ -8,7 +8,7 @@ import sys
 logger = get_logger('FirestoreManager')
 
 class FirestoreManager:
-    def __init__(self):
+    def __init__(self) -> None:
         self.db = get_firestore_client()
 
     def update_currency_trends(self, core_currencies: List[Currency], collection_name: str) -> None:
@@ -22,7 +22,6 @@ class FirestoreManager:
                 trend_data[current_date] = currency.buy
                 filtered_trend_data = {date: rate for date, rate in trend_data.items() if date >= cutoff_date}
                 trend_document.set(filtered_trend_data)
-                logger.info(f"Updated trend data for {currency.currencyCode}: {len(trend_data)} entries.")
             logger.info("Currency trends updated successfully.")
         except Exception as e:
             logger.error(f"Failed to update currency trends: {e}", exc_info=True)

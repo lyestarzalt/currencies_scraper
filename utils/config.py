@@ -6,10 +6,9 @@ if os.path.exists('.env'):
     config = Config(RepositoryEnv('.env'))
 else:
     config = Config(os.environ)
-SOURCE_THREE_URL = config('SOURCE_THREE_URL')
-SOURCE_TWO_URL = config('SOURCE_TWO_URL')
-SOURCE_ONE_URL = config('SOURCE_ONE_URL')
 API_BASE_URL = config('API_BASE_URL')
+SCRAPER_LAMBDAS = config('SCRAPER_LAMBDAS', cast=Csv())
+
 EXCLUDED_CURRENCIES = config('EXCLUDED_CURRENCIES', cast=Csv())
 ENV = config('ENV')
 
