@@ -1,7 +1,8 @@
 import logging
 import sys
+from logging import Logger
 
-def get_logger(name):
+def get_logger(name) -> Logger:
     logger = logging.getLogger(name)
 
     logger.setLevel(logging.DEBUG)
