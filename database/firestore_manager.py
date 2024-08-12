@@ -3,13 +3,14 @@ from typing import Dict, List
 from models.currency import Currency  
 from database.firebase_setup import get_firestore_client 
 from utils.logger import get_logger
+from utils.config import FIREBASE_CREDENTIALS
 import sys
 
 logger = get_logger('FirestoreManager')
 
 class FirestoreManager:
     def __init__(self) -> None:
-        self.db = get_firestore_client()
+        self.db = get_firestore_client(FIREBASE_CREDENTIALS)
 
     def update_currency_trends(self, core_currencies: List[Currency], collection_name: str) -> None:
         """Updates trend data for multiple currencies based on the latest buy rates, using today's date."""
