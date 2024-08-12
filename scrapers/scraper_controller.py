@@ -6,10 +6,9 @@ from typing import List
 from models.currency import Currency
 from exceptions.data_exceptions import DataFetchError, DataParseError
 from utils.config import SCRAPER_LAMBDAS
+from utils.logger import get_logger
 
-
-logger = logging.getLogger("ScraperController")
-logger.setLevel(logging.INFO)
+logger = get_logger("ScraperController")
 
 
 class ScraperController:

@@ -39,7 +39,6 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             currencies=official_rates, collection_name="exchange-daily-official_test"
         )
         logger.info(f"Generated unofficial and official rates. ")
-
     except Exception as e:
         logger.error(f"An error occurred: {e}")
         return {"statusCode": 500, "body": f"An error occurred: {e}"}
