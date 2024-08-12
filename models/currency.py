@@ -4,7 +4,7 @@ import json
 from datetime import datetime, date
 from utils.logger import get_logger
 
-logger = get_logger('CurrencyModel')
+logger = get_logger("CurrencyModel")
 
 try:
     with open("countries.json", "r") as file:
@@ -22,12 +22,13 @@ try:
 except Exception as e:
     logger.error(f"Failed to load currency data: {e}")
 
+
 @dataclass
 class Currency:
     currencyCode: str
     buy: float
     sell: float
-    is_core: bool 
+    is_core: bool
     update_date: date
     name: str = field(default="")
     symbol: str = field(default="")

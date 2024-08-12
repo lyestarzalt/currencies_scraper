@@ -8,44 +8,50 @@ from exceptions.data_exceptions import DataFetchError, DataParseError
 from utils.config import SCRAPER_LAMBDAS
 
 
-logger = logging.getLogger('ScraperController')
+logger = logging.getLogger("ScraperController")
 logger.setLevel(logging.INFO)
+
 
 class ScraperController:
     def __init__(self) -> None:
-        self.lambda_client = boto3.client('lambda')
+        self.lambda_client = boto3.client("lambda")
         self.scrapers = SCRAPER_LAMBDAS
 
     def invoke_lambda(self, function_name: str) -> str:
         try:
             response = self.lambda_client.invoke(
-                FunctionName=function_name,
-                InvocationType='RequestResponse'
+                FunctionName=function_name, InvocationType="RequestResponse"
             )
-            if response['StatusCode'] == 200:
-                response_payload = json.loads(response['Payload'].read().decode('utf-8'))
-                if response_payload['statusCode'] == 200:
-                    return response_payload['body']
+            if response["StatusCode"] == 200:
+                response_payload = json.loads(
+                    response["Payload"].read().decode("utf-8")
+                )
+                if response_payload["statusCode"] == 200:
+                    return response_payload["body"]
                 else:
-                    raise DataFetchError(response_payload['body'])
+                    raise DataFetchError(response_payload["body"])
             else:
-                raise DataFetchError(f"Lambda {function_name} failed with status code {response['StatusCode']}")
+                raise DataFetchError(
+                    f"Lambda {function_name} failed with status code {response['StatusCode']}"
+                )
         except Exception as e:
-            raise DataFetchError(f"Error invoking Lambda {function_name}: {str(e)}") from e
+            raise DataFetchError(
+                f"Error invoking Lambda {function_name}: {str(e)}"
+            ) from e
 
     def parse_data(self, json_content: str) -> List[Currency]:
         try:
             data = json.loads(json_content)
             currencies = []
-            update_date = datetime.strptime(data['update_time'], '%d-%m-%Y').date()
+            update_date = datetime.strptime(data["update_time"], "%d-%m-%Y").date()
 
-            for item in data['currencies']:
+            for item in data["currencies"]:
                 currency = Currency(
-                    currencyCode=item['currencyCode'],
-                    buy=float(item['buy']),
-                    sell=float(item['sell']),
+                    currencyCode=item["currencyCode"],
+                    buy=float(item["buy"]),
+                    sell=float(item["sell"]),
                     update_date=update_date,
-                    is_core=True
+                    is_core=True,
                 )
                 currencies.append(currency)
             return currencies
