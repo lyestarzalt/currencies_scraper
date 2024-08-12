@@ -2,7 +2,6 @@ import logging
 import sys
 from logging import Logger
 
-
 def get_logger(name: str) -> Logger:
     logger = logging.getLogger(name)
 
@@ -18,9 +17,8 @@ def get_logger(name: str) -> Logger:
         )
         c_handler.setFormatter(c_format)
 
-        if hasattr(c_handler, "setEncoding"):
-            c_handler.setEncoding("utf-8")
-
         logger.addHandler(c_handler)
+
+    logger.propagate = True
 
     return logger
