@@ -1,5 +1,5 @@
 import requests
-from datetime import date
+from datetime import date, datetime
 from typing import Dict, List
 from models.currency import Currency
 from utils.logger import get_logger
@@ -14,7 +14,7 @@ class CurrencyManager:
         self.base_currency: str = "usd"
         self.core_currencies: List[Currency] = core_currencies
 
-    def fetch_exchange_rates(self) -> Dict[str, float]:
+    def fetch_exchange_rates(self, base_currency: str) -> Dict[str, float]:
         """Fetch exchange rates for the base currency from an external API."""
         url = f"{API_BASE_URL}{self.base_currency}"
         try:
@@ -34,7 +34,7 @@ class CurrencyManager:
 
     def generate_unofficial_rates(self) -> List[Currency]:
         try:
-            rates = self.fetch_exchange_rates()
+            rates = self.fetch_exchange_rates(self.base_currency)
             if not rates:
                 logger.error("No rates fetched; skipping unofficial rate generation.")
                 raise ValueError("No rates fetched")
@@ -76,40 +76,32 @@ class CurrencyManager:
             )
             raise RuntimeError("Error generating unofficial exchange rates.") from e
 
-
     def generate_official_rates(self) -> List[Currency]:
-        """Generate or retrieve official currency exchange rates."""
+        """Generate or retrieve official currency exchange rates based on DZD."""
         try:
-            rates = self.fetch_exchange_rates()
+            rates = self.fetch_exchange_rates("DZD")
             if not rates:
                 logger.warning("No rates fetched; skipping official rate generation.")
                 return []
 
             official_currencies = []
-
-            # Margins for buy and sell rates
             buy_margin = 1.02  # 2% higher for buying rates
             sell_margin = 0.98  # 2% lower for selling rates
-
-            # Define core currencies
-            _core_currencies = {
-                "CNY",
+            core_currencies = {
+                "EUR",
                 "USD",
+                "GBP",
+                "CAD",
                 "CHF",
                 "TRY",
-                "AED",
-                "EUR",
-                "CAD",
                 "SAR",
-                "GBP",
+                "CNY",
+                "AED",
             }
 
             for currency_code, rate in rates.items():
-                if (
-                    currency_code != 'usd'
-                ):  # Ensure it's not the base currency
-                    is_core = currency_code in _core_currencies
-
+                if currency_code != "DZD":
+                    is_core = currency_code in core_currencies
                     buy_rate = (1 / rate) * buy_margin
                     sell_rate = (1 / rate) * sell_margin
 
