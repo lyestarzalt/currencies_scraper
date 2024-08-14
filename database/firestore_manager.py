@@ -13,32 +13,55 @@ class FirestoreManager:
     def __init__(self) -> None:
         self.db = get_firestore_client(FIREBASE_CREDENTIALS)
 
+
     def update_currency_trends(
         self, core_currencies: List[Currency], collection_name: str
     ) -> None:
-        """Updates trend data for multiple currencies based on the latest buy rates, using today's date."""
+        """Updates trend data for specified core currencies based on the latest buy rates, using today's date."""
         try:
+            core_currency_codes = {
+                "AED",
+                "CAD",
+                "CHF",
+                "CNY",
+                "EUR",
+                "GBP",
+                "MAD",
+                "SAR",
+                "TND",
+                "TRY",
+                "USD",
+            }
+
             current_date = datetime.now().date().strftime("%Y-%m-%d")
-            cutoff_date = (datetime.now().date() - timedelta(days=730)).strftime(
-                "%Y-%m-%d"
-            )
-            for currency in core_currencies:
+            cutoff_date = (datetime.now().date() - timedelta(days=730)).strftime("%Y-%m-%d")
+
+            filtered_currencies = [
+                currency
+                for currency in core_currencies
+                if currency.currencyCode in core_currency_codes
+            ]
+
+            batch = self.db.batch()
+
+            for currency in filtered_currencies:
                 trend_document = self.db.collection(collection_name).document(
                     currency.currencyCode
                 )
                 trend_data: Dict[str, float] = (
-                    trend_document.get().to_dict()
-                    if trend_document.get().exists
-                    else {}
+                    trend_document.get().to_dict() if trend_document.get().exists else {}
                 )
+
                 trend_data[current_date] = currency.buy
+
                 filtered_trend_data = {
-                    date: rate
-                    for date, rate in trend_data.items()
-                    if date >= cutoff_date
+                    date: rate for date, rate in trend_data.items() if date >= cutoff_date
                 }
-                trend_document.set(filtered_trend_data)
-            logger.info("Currency trends updated successfully.")
+
+                batch.set(trend_document, filtered_trend_data)
+
+            batch.commit()
+            logger.info("Currency trends updated successfully for core currencies.")
         except Exception as e:
             logger.error(f"Failed to update currency trends: {e}", exc_info=True)
             raise
