@@ -23,9 +23,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 "body": "No currencies fetched, exiting application.",
             }
 
-        currency_manager = CurrencyManager(
-            base_currency="usd", core_currencies=currencies
-        )
+        currency_manager = CurrencyManager(core_currencies=currencies)
         unofficial_rates = currency_manager.generate_unofficial_rates()
         official_rates = currency_manager.generate_official_rates()
 

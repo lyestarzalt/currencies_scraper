@@ -10,18 +10,17 @@ logger = get_logger("CurrencyManager")
 
 
 class CurrencyManager:
-    def __init__(self, base_currency: str, core_currencies: List[Currency]):
-        self.base_currency: str = "usd"
+    def __init__(self, core_currencies: List[Currency]):
         self.core_currencies: List[Currency] = core_currencies
 
     def fetch_exchange_rates(self, base_currency: str) -> Dict[str, float]:
         """Fetch exchange rates for the base currency from an external API."""
-        url = f"{API_BASE_URL}{self.base_currency}"
+        url = f"{API_BASE_URL}{base_currency}"
         try:
             response = requests.get(url)
             response.raise_for_status()
             data = response.json()
-            logger.info(f"Exchange rates fetched for {self.base_currency}.")
+            logger.info(f"Exchange rates fetched for {base_currency}.")
 
             return data["rates"]
         except requests.RequestException as e:
@@ -34,7 +33,7 @@ class CurrencyManager:
 
     def generate_unofficial_rates(self) -> List[Currency]:
         try:
-            rates = self.fetch_exchange_rates(self.base_currency)
+            rates = self.fetch_exchange_rates('usd')
             if not rates:
                 logger.error("No rates fetched; skipping unofficial rate generation.")
                 raise ValueError("No rates fetched")
