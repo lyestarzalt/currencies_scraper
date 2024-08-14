@@ -113,9 +113,15 @@ class CurrencyManager:
                     )
                     official_currencies.append(currency)
 
-            logger.info("Official exchange rates generated successfully.")
-            return official_currencies
+            final_currencies = [
+                currency
+                for currency in official_currencies
+                if not is_currency_excluded(currency.currencyCode)
+            ]
+
+            logger.info("Unofficial exchange rates generated successfully.")
+            return final_currencies
 
         except Exception as e:
             logger.warning(f"Failed to generate official rates: {str(e)}", exc_info=True)
-            return []
+            raise RuntimeError("Error generating official exchange rates.") from e
