@@ -38,21 +38,29 @@ class CurrencyManager:
                 logger.error("No rates fetched; skipping unofficial rate generation.")
                 raise ValueError("No rates fetched")
 
-            core_codes = set(self.core_currencies)
-            converted_currencies = []
-            currencies_dict = {
-                currency.currencyCode: currency for currency in self.core_currencies
+            core_currency_codes = {
+                currency.currencyCode for currency in self.core_currencies
             }
-            usd_currency = currencies_dict.get("USD")
 
-            for currency in self.core_currencies:
-                currencies_dict[currency.currencyCode] = currency
+            converted_currencies = []
+            usd_currency = next(
+                (
+                    currency
+                    for currency in self.core_currencies
+                    if currency.currencyCode == "USD"
+                ),
+                None,
+            )
 
-            usd_currency = currencies_dict.get("USD")
             if usd_currency is not None:
                 for currency_code, rate_to_usd in rates.items():
+                    # Skip if this currency is a core currency
+                    if currency_code in core_currency_codes:
+                        continue
+
                     converted_buy_rate = usd_currency.buy / rate_to_usd
                     converted_sell_rate = usd_currency.sell / rate_to_usd
+
                     currency = Currency(
                         currencyCode=currency_code,
                         buy=converted_buy_rate,
@@ -61,11 +69,8 @@ class CurrencyManager:
                         is_core=False,
                     )
                     converted_currencies.append(currency)
-            final_currencies = [
-                currency
-                for currency in self.core_currencies + converted_currencies
-                if not is_currency_excluded(currency.currencyCode)
-            ]
+
+            final_currencies = self.core_currencies + converted_currencies
 
             logger.info("Unofficial exchange rates generated successfully.")
             return final_currencies
