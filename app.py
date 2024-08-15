@@ -22,7 +22,7 @@ def main() -> None:
             logger.error("No currencies fetched, exiting application.")
             return
         currency_manager = CurrencyManager(
-            base_currency="usd", core_currencies=currencies
+            base_currency="usd", core_currencies=currencies # type: ignore
         )
         unofficial_rates = currency_manager.generate_unofficial_rates()
         official_rates = currency_manager.generate_official_rates()
