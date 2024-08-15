@@ -70,8 +70,13 @@ class CurrencyManager:
                     )
                     converted_currencies.append(currency)
 
-            final_currencies = self.core_currencies + converted_currencies
-
+            # Filter out excluded currencies
+            filtered_core_currencies = [
+                currency for currency in self.core_currencies
+                if not is_currency_excluded(currency.currencyCode)
+            ]
+            # Combine the core and converted currencies (with no overlap and excluding excluded currencies)
+            final_currencies = filtered_core_currencies + converted_currencies
             logger.info("Unofficial exchange rates generated successfully.")
             return final_currencies
         except Exception as e:
