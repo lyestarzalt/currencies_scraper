@@ -3,6 +3,7 @@ from currency_management.currency_manager import CurrencyManager
 from database.firestore_manager import FirestoreManager
 from utils.logger import get_logger
 from typing import Any, Dict
+from utils.config import get_collection_name
 
 logger = get_logger("App")
 
@@ -28,13 +29,13 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         official_rates = currency_manager.generate_official_rates()
 
         firestore_manager.update_currency_trends(
-            currencies, collection_name="currency-trends_test"
+            currencies, collection_name=get_collection_name("currency-trends")
         )
         firestore_manager.upload_exchange_rates(
-            currencies=unofficial_rates, collection_name="exchange-daily_test"
+            currencies=unofficial_rates, collection_name=get_collection_name("exchange-daily")
         )
         firestore_manager.upload_exchange_rates(
-            currencies=official_rates, collection_name="exchange-daily-official_test"
+            currencies=official_rates, collection_name=get_collection_name("exchange-daily-official")
         )
         logger.info(f"Generated unofficial and official rates. ")
     except Exception as e:
