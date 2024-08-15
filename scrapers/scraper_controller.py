@@ -42,7 +42,9 @@ class ScraperController:
         try:
             data = json.loads(json_content)
             currencies = []
-            update_date = datetime.strptime(data["update_time"], "%d-%m-%Y").date()
+            update_date = datetime.strptime(data["update_time"], "%d %B %Y").strftime(
+                "%Y-%m-%d"
+            )
 
             for item in data["currencies"]:
                 currency = Currency(

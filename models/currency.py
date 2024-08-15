@@ -29,7 +29,7 @@ class Currency:
     buy: float
     sell: float
     is_core: bool
-    update_date: date
+    update_date: str
     name: str = field(default="")
     symbol: str = field(default="")
     flag: str = field(default="")
@@ -43,7 +43,7 @@ class Currency:
         self.symbol = currency_info.get("symbol", self.symbol)
         self.flag = currency_info.get("flag", self.flag)
         if not self.update_date:
-            self.update_date = datetime.now().date()
+            self.update_date = date.today().strftime("%Y-%m-%d")
 
     def __eq__(self, other: object) -> bool:
         """

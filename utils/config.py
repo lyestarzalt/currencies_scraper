@@ -4,6 +4,7 @@ from decouple import Config, RepositoryEnv, Csv
 import json
 import os
 from utils.logger import get_logger
+
 logger = get_logger("ConfigLogger")
 if os.path.exists(".env"):
     config = Config(RepositoryEnv(".env"))

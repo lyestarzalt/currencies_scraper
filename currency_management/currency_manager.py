@@ -33,7 +33,7 @@ class CurrencyManager:
 
     def generate_unofficial_rates(self) -> List[Currency]:
         try:
-            rates = self.fetch_exchange_rates('usd')
+            rates = self.fetch_exchange_rates("usd")
             if not rates:
                 logger.error("No rates fetched; skipping unofficial rate generation.")
                 raise ValueError("No rates fetched")
@@ -57,7 +57,7 @@ class CurrencyManager:
                         currencyCode=currency_code,
                         buy=converted_buy_rate,
                         sell=converted_sell_rate,
-                        update_date=date.today(),
+                        update_date=date.today().strftime("%Y-%m-%d"),
                         is_core=False,
                     )
                     converted_currencies.append(currency)
@@ -108,7 +108,7 @@ class CurrencyManager:
                         currencyCode=currency_code,
                         buy=buy_rate,
                         sell=sell_rate,
-                        update_date=date.today(),
+                        update_date=date.today().strftime("%Y-%m-%d"),
                         is_core=is_core,
                     )
                     official_currencies.append(currency)
@@ -123,5 +123,7 @@ class CurrencyManager:
             return final_currencies
 
         except Exception as e:
-            logger.warning(f"Failed to generate official rates: {str(e)}", exc_info=True)
+            logger.warning(
+                f"Failed to generate official rates: {str(e)}", exc_info=True
+            )
             raise RuntimeError("Error generating official exchange rates.") from e
