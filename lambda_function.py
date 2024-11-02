@@ -29,13 +29,15 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         official_rates = currency_manager.generate_official_rates()
 
         firestore_manager.update_currency_trends(
-            currencies, collection_name=get_collection_name("currency-trends")
+            currencies, collection_name=get_collection_name("exchange-rate-trends")
         )
         firestore_manager.upload_exchange_rates(
-            currencies=unofficial_rates, collection_name=get_collection_name("exchange-daily")
+            currencies=unofficial_rates,
+            collection_name=get_collection_name("exchange-daily"),
         )
         firestore_manager.upload_exchange_rates(
-            currencies=official_rates, collection_name=get_collection_name("exchange-daily-official")
+            currencies=official_rates,
+            collection_name=get_collection_name("exchange-daily-official"),
         )
         logger.info(f"Generated unofficial and official rates. ")
     except Exception as e:
