@@ -96,8 +96,13 @@ class CurrencyManager:
                 return []
 
             official_currencies = []
-            buy_margin = 1.02  # 2% higher for buying rates
-            sell_margin = 0.98  # 2% lower for selling rates
+            # Universal FX / Achat-Vente convention: the bank BUYS foreign at
+            # its bid (lower) and SELLS foreign at its ask (higher), so
+            # buy < sell. The parallel scraper source already follows this;
+            # the official synthesis must too, or the app's converter maths
+            # invert for one of the two markets.
+            buy_margin = 0.98  # 2% lower — bank buys from customer at bid
+            sell_margin = 1.02  # 2% higher — bank sells to customer at ask
             core_currencies = {
                 "EUR",
                 "USD",
