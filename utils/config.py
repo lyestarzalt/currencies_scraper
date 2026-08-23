@@ -70,3 +70,20 @@ def get_collection_name(base_name: str) -> str:
     """Return collection name based on the environment."""
     suffix: str = "_test" if ENV == "staging" else ""
     return f"{base_name}{suffix}"
+
+
+# --- R2 (Cloudflare) ---------------------------------------------------------
+# Public-ish values (endpoint contains the account ID, which is exposed on the
+# r2.dev domain anyway). Secrets must come from Lambda env vars.
+R2_ENDPOINT_URL: str = config(
+    "R2_ENDPOINT_URL",
+    default="https://731d14170f78253a69c0db1efc8f68d9.r2.cloudflarestorage.com",
+)  # type: ignore
+R2_BUCKET: str = config("R2_BUCKET", default="dinar-echange-rates")  # type: ignore
+R2_ACCESS_KEY_ID: str = config("R2_ACCESS_KEY_ID", default="")  # type: ignore
+R2_SECRET_ACCESS_KEY: str = config("R2_SECRET_ACCESS_KEY", default="")  # type: ignore
+
+
+def get_r2_key_prefix() -> str:
+    """Return the top-level R2 key prefix for the current environment."""
+    return "v1-test" if ENV == "staging" else "v1"

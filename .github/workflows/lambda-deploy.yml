@@ -14,10 +14,11 @@ jobs:
 
       - name: Package Lambda function
         run: |
-          zip -r deployment-package.zip .
+          zip -r deployment-package.zip . \
+            -x '.git/*' '.github/*' 'tests/*' '.DS_Store' '*.md' 'mypy.ini'
 
       - name: Deploy to Lambda
-        uses: appleboy/lambda-action@v0.2.0
+        uses: appleboy/lambda-action@bdbe5c99e38d855e0fa2ae1aba355da64c860a57 # v0.2.0
         with:
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

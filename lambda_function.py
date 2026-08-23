@@ -1,6 +1,7 @@
 from scrapers.scraper_controller import ScraperController
 from currency_management.currency_manager import CurrencyManager
 from database.firestore_manager import FirestoreManager
+from database.r2_publisher import R2Publisher
 from utils.logger import get_logger
 from typing import Any, Dict
 from utils.config import get_collection_name
@@ -11,6 +12,7 @@ logger = get_logger("App")
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     logger.info("Starting the application.")
     firestore_manager = FirestoreManager()
+    r2_publisher = R2Publisher()
     scraper_controller = ScraperController()
 
     try:
@@ -39,6 +41,16 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             currencies=official_rates,
             collection_name=get_collection_name("exchange-daily-official"),
         )
+
+        # Dual-write to R2. Failures here must not break the Firestore path
+        # while clients are still on Firestore.
+        try:
+            r2_publisher.upload_exchange_rates(unofficial_rates, market="parallel")
+            r2_publisher.upload_exchange_rates(official_rates, market="official")
+            r2_publisher.update_currency_trends(currencies)
+        except Exception as r2_err:
+            logger.error(f"R2 publish failed (Firestore write still succeeded): {r2_err}", exc_info=True)
+
         logger.info(f"Generated unofficial and official rates. ")
     except Exception as e:
         logger.error(f"An error occurred: {e}")
